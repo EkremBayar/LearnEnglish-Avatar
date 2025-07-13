@@ -1,0 +1,54 @@
+---
+title: "Find-Structures"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Find-Structures}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Packages
+```{r setup, include = TRUE, message=FALSE, warning=FALSE}
+library(LearnEnglishWithAvatar)
+library(dplyr)
+```
+
+# Examples: Some structures
+```{r}
+# Of
+target_of <- transcripts_atla %>% filter(find_structure(character_words, word = "of"))
+
+# IF Conditions & Unless
+target_if <- transcripts_atla %>% filter(find_structure(character_words, word = c("if", "unless")))
+
+# That
+target_that <- transcripts_atla %>% filter(find_structure(character_words, word = "that"))
+
+# When
+target_when <- transcripts_atla %>% filter(find_structure(character_words, word = "when"))
+
+# Which
+target_which <- transcripts_atla %>% filter(find_structure(character_words, word = "which"))
+
+# What else
+target_whatelse <- transcripts_atla %>% filter(find_structure(character_words, word = "what else"))
+
+# Would
+target_would <- transcripts_atla %>% filter(find_structure(character_words, word = c("would", "'d")))
+
+target_would <- transcripts_atla %>% filter(find_structure(character_words, word = c("would like", "'d like", "would love", "'d love")))
+```
+
+# Sample
+```{r}
+head(target_if %>% select(id, book, chapter, character, character_words))
+```
+
+

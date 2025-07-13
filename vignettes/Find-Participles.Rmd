@@ -1,0 +1,35 @@
+---
+title: "Find-Participles"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Find-Participles}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Packages
+```{r setup, include = TRUE, message=FALSE, warning=FALSE}
+library(LearnEnglishWithAvatar)
+library(dplyr)
+```
+
+# Examples: Some Participles
+```{r}
+# Participles - ed
+target_ed <- transcripts_atla %>% filter(find_participles(character_words, type = "ed")) 
+
+# Participles - ing
+target_ing <- transcripts_atla %>% filter(find_participles(character_words, type = "ing"))
+```
+
+# Sample
+```{r}
+head(target_ing %>% select(id, book, chapter, character, character_words))
+```

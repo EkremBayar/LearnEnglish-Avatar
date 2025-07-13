@@ -1,0 +1,26 @@
+Package: LearnEnglishWithAvatar
+Type: Package
+Title: Learn English with Avatar Transcripts
+Version: 0.1.0
+Author: Ekrem Bayar
+Maintainer: Ekrem Bayar <yourself@somewhere.net>
+Description: More about what it does (maybe more than one line)
+    Use four spaces when indenting paragraphs within the Description.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    dplyr,
+    DT,
+    magrittr,
+    markdown,
+    openxlsx,
+    rmarkdown,
+    stringr
+Depends: 
+    R (>= 3.5)
+Suggests: 
+    knitr,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+VignetteBuilder: knitr
