@@ -12,11 +12,14 @@ LazyData: true
 Imports: 
     dplyr,
     DT,
+    fs,
     magrittr,
     markdown,
     openxlsx,
     rmarkdown,
-    stringr
+    shiny,
+    stringr,
+    usethis
 Depends: 
     R (>= 3.5)
 Suggests: 
