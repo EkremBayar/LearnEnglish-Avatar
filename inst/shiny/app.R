@@ -46,6 +46,7 @@ datatable_header_ui <- function(datatable_id){
 }
 
 data(transcripts_atla)
+data(phrasal_verbs)
 
 df <- transcripts_atla %>%
   mutate(
@@ -89,7 +90,7 @@ ui <- page_sidebar(
 
     hr(),
 
-    selectInput("type_process", label = "Type", choices = c("Pattern", "Participles", "Detect"), selected = "Pattern"),
+    selectInput("type_process", label = "Type", choices = c("Pattern", "Participles", "Detect", "Phrasal Verbs"), selected = "Pattern"),
 
     uiOutput("type_process_select"),
 
@@ -154,12 +155,19 @@ server <- function(input, output, session) {
       label_temp <- "Find pattern"
       multiple_temp <- TRUE
       updateSelectizeInput(session, "eng_word", choices = rvList$last_pattern, selected = rvList$last_pattern_select)
-    }else{
+    }else if(input$type_process == "Participles"){
       choices_temp <- c("ing", "ed")
       create_temp <- FALSE
       label_temp <- "Find participles"
       multiple_temp <- FALSE
       updateSelectizeInput(session, "eng_word", choices = c("ing", "ed"), selected = "ing")
+    }else if(input$type_process == "Phrasal Verbs"){
+      choices_temp <- phrasal_verbs$PV
+      create_temp <- FALSE
+      label_temp <- "Find phrasal verbs"
+      multiple_temp <- TRUE
+      updateSelectizeInput(session, "eng_word", choices = choices_temp, selected = character())
+
     }
 
     output$type_process_select <- renderUI({
@@ -186,7 +194,7 @@ server <- function(input, output, session) {
 
     if(length(input$eng_word) > 0){
 
-      if(input$type_process == "Pattern"){
+      if(input$type_process == "Pattern" | input$type_process == "Phrasal Verbs"){
         temp <- df %>% filter(find_structure(character_words, word = input$eng_word))
       }else if(input$type_process == "Detect"){
         temp <- df %>% filter(find_detect(character_words, word = input$eng_word))
@@ -206,7 +214,7 @@ server <- function(input, output, session) {
     highlight_terms <- input$eng_word[input$eng_word != "" & !is.na(input$eng_word)]
 
     if (!is.null(highlight_terms) && length(highlight_terms) > 0) {
-      if (input$type_process == "Pattern") {
+      if (input$type_process == "Pattern" | input$type_process == "Phrasal Verbs") {
         # --- Pattern için JS kodu ---
         # Kelime sınırları ile tam eşleşme, regex özel karakterlerini kaçırarak
         escaped_words_r <- sapply(highlight_terms, function(word) {
