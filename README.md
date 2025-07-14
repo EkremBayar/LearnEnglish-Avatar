@@ -8,7 +8,7 @@
 
 ![](ss/ss2.png)
 
-Water, Earth, Fire, Air and English!
+<strong>Water, Earth, Fire, Air and English!</strong>
 
 <img src="https://steamuserimages-a.akamaihd.net/ugc/903393148752017280/6124EEF1AD9A6A728E068068B426F9F82949E293/" alt="Resim Açıklaması" style="width:100%;">
 
