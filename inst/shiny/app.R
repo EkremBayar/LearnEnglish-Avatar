@@ -5,6 +5,33 @@ library(dplyr)
 library(stringr)
 library(forcats)
 
+# functions
+find_structure <- function(text_column, word){
+  if(!is.character(word)){
+    stop("word argument must be a character or character vector!")
+  }
+  word_pattern <- paste0(tolower(word))
+  return(stringr::str_detect(stringr::str_to_lower(text_column), pattern = paste0(paste0("\\b", word_pattern, "\\b"),collapse = "|")))
+}
+
+find_participles <- function(text_column, type = c("ing", "ed")){
+
+  if(type == "ing" | type == "ed"){
+    pattern <- paste0("\\b.*",type,"\\b")
+  }else{
+    stop("type argument must be ing or ed!")
+  }
+  return(stringr::str_detect(stringr::str_to_lower(text_column), pattern = pattern))
+}
+
+find_detect <- function(text_column, word){
+  if(!is.character(word)){
+    stop("word argument must be a character or character vector!")
+  }
+  word_pattern <- paste0(tolower(word))
+  return(stringr::str_detect(stringr::str_to_lower(text_column), pattern = paste0(paste0(word_pattern),collapse = "|")))
+}
+
 
 datatable_header_ui <- function(datatable_id){
   res <- tagList(
@@ -54,7 +81,8 @@ ui <- page_sidebar(
       src = "logo.png",
       alt = "Uygulama Logosu", # Resim yüklenmezse gösterilecek alternatif metin
       style = "max-width: 50%; height: auto; display: block; margin: auto;"
-    ), h4("ATLA Transcripts",style="text-align:center")), # Sidebar başlığı
+    ), h4("ATLA Transcripts",style="text-align:center")
+    ), # Sidebar başlığı
     width = 300, # Sidebar genişliği (isteğe bağlı)
     open = "desktop", # Masaüstünde varsayılan olarak açık, mobilde kapalı
 
@@ -77,7 +105,12 @@ ui <- page_sidebar(
 
   # Ana panel içeriği
   card(
-    card_header("Transcripts"),
+    card_header(HTML(
+      '<div style="display: flex; justify-content: space-between; align-items: center;">',
+      '  <span>Transcripts</span>', # Sola hizalanacak metin
+      '  <a href="https://translate.google.com/?sl=en&tl=tr&op=translate" target="blank_">Google Translate</a>', # Sağa hizalanacak hyperlink
+      '</div>'
+    )),
     dataTableOutput("dt_transcript"),
     datatable_header_ui("dt_transcript"),
     card_footer("Only the Avatar can save your English skills!")
@@ -296,6 +329,16 @@ server <- function(input, output, session) {
         columnDefs = list(
           render_js
         )
+      ),
+      callback = JS(
+        "table.on('dblclick', 'td', function() {",
+        "  var cell = $(this);",
+        "  var character_words = cell.text();",
+        "  var encodedText = encodeURIComponent(character_words);",
+        "  var googleTranslateUrl = 'https://translate.google.com/?sl=en&tl=tr&text=' + encodedText;", # <<-- Sorun burada olabilir
+        "  window.open(googleTranslateUrl, '_blank');",
+        "  return false;",
+        "});"
       )
     )
   })
