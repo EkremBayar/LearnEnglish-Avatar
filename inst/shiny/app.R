@@ -46,18 +46,8 @@ datatable_header_ui <- function(datatable_id){
 }
 
 data(transcripts_atla)
+data(transcripts_korra)
 data(phrasal_verbs)
-
-df <- transcripts_atla %>%
-  mutate(
-    character = factor(character),
-    book = fct_reorder(paste0(book_num,". ",  book), book_num),
-    chapter = fct_reorder(paste0(book_num,".",chapter_num,". ",  chapter), chapter_num)
-  ) %>%
-  filter(!is.na(character_words)) %>%
-  select(book, chapter, character, character_words) #"full_text", "character_words"))
-js_target_index <- which(names(df) == "character_words")
-
 
 ui <- page_sidebar(
   tags$head(
@@ -83,12 +73,14 @@ ui <- page_sidebar(
       src = "logo.png",
       alt = "Uygulama Logosu", # Resim yüklenmezse gösterilecek alternatif metin
       style = "max-width: 50%; height: auto; display: block; margin: auto;"
-    ), h4("ATLA Transcripts",style="text-align:center")
+    ), h4("Avatar Transcripts",style="text-align:center")
     ), # Sidebar başlığı
     width = 300, # Sidebar genişliği (isteğe bağlı)
     open = "desktop", # Masaüstünde varsayılan olarak açık, mobilde kapalı
 
     hr(),
+
+    selectInput("serie_type", label = "Avatar", choices = c("Aang", "Korra"), selected = "Aang"),
 
     selectInput("type_process", label = "Type", choices = c("Pattern", "Participles", "Detect", "Phrasal Verbs"), selected = "Pattern"),
 
@@ -162,7 +154,7 @@ server <- function(input, output, session) {
       multiple_temp <- FALSE
       updateSelectizeInput(session, "eng_word", choices = c("ing", "ed"), selected = "ing")
     }else if(input$type_process == "Phrasal Verbs"){
-      choices_temp <- phrasal_verbs$PV
+      choices_temp <- phrasal_verbs %>% filter(str_detect(PV, " ")) %>% pull(PV)
       create_temp <- FALSE
       label_temp <- "Find phrasal verbs"
       multiple_temp <- TRUE
@@ -191,6 +183,22 @@ server <- function(input, output, session) {
 
     input$type_process
     input$eng_word
+    input$serie_type
+
+    if(input$serie_type == "Aang"){
+      df <- transcripts_atla
+    }else{
+      df <- transcripts_korra
+    }
+
+    df <- df %>%
+      mutate(
+        character = factor(character),
+        book = fct_reorder(paste0(book_num,". ",  book), book_num),
+        chapter = fct_reorder(paste0(book_num,".",chapter_num,". ",  chapter), chapter_num)
+      ) %>%
+      filter(!is.na(character_words), character != "Scene Description") %>%
+      select(book, chapter, character, character_words) #"full_text", "character_words"))
 
     if(length(input$eng_word) > 0){
 
@@ -210,6 +218,8 @@ server <- function(input, output, session) {
 
   # Datatable
   output$dt_transcript <- renderDataTable({
+
+    js_target_index <- which(names(temp()) == "character_words")
 
     highlight_terms <- input$eng_word[input$eng_word != "" & !is.na(input$eng_word)]
 
