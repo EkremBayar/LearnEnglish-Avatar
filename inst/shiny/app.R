@@ -4,7 +4,7 @@ library(DT)
 library(dplyr)
 library(stringr)
 library(forcats)
-library(LearnEnglishWithAvatar)
+
 
 datatable_header_ui <- function(datatable_id){
   res <- tagList(
@@ -16,6 +16,8 @@ datatable_header_ui <- function(datatable_id){
   )
   return(res)
 }
+
+data(transcripts_atla)
 
 df <- transcripts_atla %>%
   mutate(
@@ -151,11 +153,11 @@ server <- function(input, output, session) {
     if(length(input$eng_word) > 0){
 
       if(input$type_process == "Pattern"){
-        temp <- df %>% filter(LearnEnglishWithAvatar::find_structure(character_words, word = input$eng_word))
+        temp <- df %>% filter(find_structure(character_words, word = input$eng_word))
       }else if(input$type_process == "Detect"){
-        temp <- df %>% filter(LearnEnglishWithAvatar::find_detect(character_words, word = input$eng_word))
+        temp <- df %>% filter(find_detect(character_words, word = input$eng_word))
       }else if(input$type_process == "Participles"){
-        temp <- df %>% filter(LearnEnglishWithAvatar::find_participles(character_words, type = input$eng_word)) %>% suppressWarnings()
+        temp <- df %>% filter(find_participles(character_words, type = input$eng_word)) %>% suppressWarnings()
       }
 
     }else{
