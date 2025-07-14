@@ -7,3 +7,84 @@
 .highlight-blue {
   color: blue;
 }
+
+
+.pagination {
+    --bs-pagination-padding-x: .75rem;
+    --bs-pagination-padding-y: .375rem;
+    --bs-pagination-font-size: 1rem;
+    --bs-pagination-color: #fff;
+    --bs-pagination-bg: #002749;
+    --bs-pagination-border-width: 0;
+    --bs-pagination-border-color: rgba(0, 0, 0, 0);
+    --bs-pagination-border-radius: var(--bs-border-radius);
+    --bs-pagination-hover-color: #fff;
+    --bs-pagination-hover-bg: #007bff;
+    --bs-pagination-hover-border-color: rgba(0, 0, 0, 0);
+    --bs-pagination-focus-color: var(--bs-link-hover-color);
+    --bs-pagination-focus-bg: var(--bs-secondary-bg);
+    --bs-pagination-focus-box-shadow: 0 0 0 .25rem rgba(4, 30, 66, 0.25);
+    --bs-pagination-active-color: #fff;
+    --bs-pagination-active-bg: #007bff;
+    --bs-pagination-active-border-color: rgba(0, 0, 0, 0);
+    --bs-pagination-disabled-color: #ecf0f1;
+    --bs-pagination-disabled-bg: #002749;
+    --bs-pagination-disabled-border-color: rgba(0, 0, 0, 0);
+    display: flex;
+    display: -webkit-flex;
+    padding-left: 0;
+    list-style: none;
+}
+
+
+/* styles.css */
+
+/* Resminizi sabitleyen CSS */
+.fixed-bottom-image {
+  position: fixed; /* Ekranın belirli bir noktasına sabitler */
+  bottom: 20px;    /* Alttan boşluk (deneyerek ayarlayabilirsiniz) */
+  right: 20px;     /* Sağdan boşluk (deneyerek ayarlayabilirsiniz) */
+  width: 150px;    /* Resmin genişliği (deneyerek ayarlayabilirsiniz) */
+  height: auto;    /* Oranı koru */
+  z-index: 10000;  /* Diğer elemanların çok üzerinde görünmesini sağlar, çok yüksek bir değer verelim */
+}
+
+.fixed-bottom-image img {
+  max-width: 100%; /* Kapsayıcı div'in genişliğini aşmasın */
+  height: auto;
+  display: block;  /* Resmi div içinde ortalamak için */
+  margin: 0 auto;  /* Resmi div içinde yatayda ortalar */
+}
+
+/* Eğer sidebar arka plan rengi #002749 ise, onun üzerine beyaz metin */
+.sidebar .title h4 {
+  color: white;
+}
+
+/* Tablo başlığı için özel stil */
+#dt_transcript thead th {
+  background-color: #002749; /* Sidebar rengiyle aynı yapalım */
+  color: white;
+}
+
+/* Highlight renkleri için CSS (eğer styles.css'inizde yoksa) */
+.highlight-red {
+  background-color: #ffcccc; /* Açık kırmızı arka plan */
+  font-weight: bold;
+}
+
+.highlight-blue {
+  background-color: #e6f7ff; /* Açık mavi arka plan */
+  font-weight: normal;
+}
+
+/* Eğer resim ortalanmış olsun isterseniz: */
+/* .fixed-bottom-image {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150px;
+  height: auto;
+  z-index: 10000;
+} */

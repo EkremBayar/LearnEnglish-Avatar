@@ -25,6 +25,6 @@ find_structure <- function(text_column, word){
   if(!is.character(word)){
     stop("word argument must be a character or character vector!")
   }
-  word_pattern <- paste0(tolower(word), collapse = "|")
-  return(stringr::str_detect(stringr::str_to_lower(text_column), pattern = paste0("\\b", word_pattern, "\\b")))
+  word_pattern <- paste0(tolower(word))
+  return(stringr::str_detect(stringr::str_to_lower(text_column), pattern = paste0(paste0("\\b", word_pattern, "\\b"),collapse = "|")))
 }
