@@ -88,7 +88,8 @@ ui <- page_sidebar(
     #   `live-search` = TRUE,                   # Arama kutusu
     #   `live-search-placeholder` = "Search page number..."  # Arama kutusu yer tutucu
     # ))
-    numericInput("page_select", "Pagination", value = 1)
+    numericInput("page_select", "Pagination", value = 1),
+    downloadButton("download_script", "Download", icon = icon("file-excel"))
   ),
 
   # Ana panel içeriği
@@ -507,6 +508,22 @@ server <- function(input, output, session) {
 
     )
   })
+
+
+  output$download_script <- downloadHandler(
+    filename = function() {
+      paste0("transcript_",stringr::str_to_lower(input$serie_type),".xlsx")
+    },
+    content = function(file) {
+      wb <- openxlsx::createWorkbook()
+      openxlsx::addWorksheet(wb, "Transcript")
+      openxlsx::writeDataTable(wb, x = temp(), sheet = 1)
+      openxlsx::addStyle(wb, "Transcript", openxlsx::createStyle(wrapText = TRUE, valign = "top"), rows = 2:(nrow(temp()) + 1), cols = 1:4, gridExpand = TRUE)
+      openxlsx::setColWidths(wb, "Transcript", cols = 1:3, widths = 15)
+      openxlsx::setColWidths(wb, "Transcript", cols = 4, widths = 100)
+      openxlsx::saveWorkbook(wb, file, overwrite = TRUE)
+    }
+  )
 
 
 }
