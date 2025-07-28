@@ -89,7 +89,9 @@ ui <- page_sidebar(
     #   `live-search-placeholder` = "Search page number..."  # Arama kutusu yer tutucu
     # ))
     numericInput("page_select", "Pagination", value = 1),
-    downloadButton("download_script", "Download", icon = icon("file-excel"))
+    #downloadButton("download_script", "Download", icon = icon("file-excel")),
+    actionButton("download_excel", "Download",icon = icon("file-excel")),
+    uiOutput("js_download")
   ),
 
   # Ana panel içeriği
@@ -510,20 +512,78 @@ server <- function(input, output, session) {
   })
 
 
-  output$download_script <- downloadHandler(
-    filename = function() {
-      paste0("transcript_",stringr::str_to_lower(input$serie_type),".xlsx")
-    },
-    content = function(file) {
-      wb <- openxlsx::createWorkbook()
-      openxlsx::addWorksheet(wb, "Transcript")
-      openxlsx::writeDataTable(wb, x = temp(), sheet = 1)
-      openxlsx::addStyle(wb, "Transcript", openxlsx::createStyle(wrapText = TRUE, valign = "top"), rows = 2:(nrow(temp()) + 1), cols = 1:4, gridExpand = TRUE)
-      openxlsx::setColWidths(wb, "Transcript", cols = 1:3, widths = 15)
-      openxlsx::setColWidths(wb, "Transcript", cols = 4, widths = 100)
-      openxlsx::saveWorkbook(wb, file, overwrite = TRUE)
-    }
-  )
+  # output$download_script <- downloadHandler(
+  #   filename = function() {
+  #     paste0("transcript_",stringr::str_to_lower(input$serie_type),".xlsx")
+  #   },
+  #   content = function(file) {
+  #     # wb <- openxlsx::createWorkbook()
+  #     # openxlsx::addWorksheet(wb, "Transcript")
+  #     # openxlsx::writeDataTable(wb, x = temp(), sheet = 1)
+  #     # openxlsx::addStyle(wb, "Transcript", openxlsx::createStyle(wrapText = TRUE, valign = "top"), rows = 2:(nrow(temp()) + 1), cols = 1:4, gridExpand = TRUE)
+  #     # openxlsx::setColWidths(wb, "Transcript", cols = 1:3, widths = 15)
+  #     # openxlsx::setColWidths(wb, "Transcript", cols = 4, widths = 100)
+  #     # openxlsx::saveWorkbook(wb, file, overwrite = TRUE)
+  #     openxlsx::write.xlsx(temp(), file)
+  #   }
+  # )
+
+  observeEvent(input$download_excel, {
+    # 1. R'da Excel dosyasını geçici bir konuma oluştur
+    # tempfile() fonksiyonu güvenli ve benzersiz bir geçici dosya yolu sağlar.
+    temp_excel_file <- tempfile(fileext = ".xlsx")
+
+    wb <- openxlsx::createWorkbook()
+    openxlsx::addWorksheet(wb, "Transcript")
+    openxlsx::writeDataTable(wb, "Transcript", temp()) # temp() yerine temp_data() kullanıldı
+    openxlsx::addStyle(wb, "Transcript", openxlsx::createStyle(wrapText = TRUE, valign = "top"), rows = 2:(nrow(temp()) + 1), cols = 1:4, gridExpand = TRUE)
+    openxlsx::setColWidths(wb, "Transcript", cols = 1:3, widths = 15)
+    openxlsx::setColWidths(wb, "Transcript", cols = 4, widths = 100)
+
+    # saveWorkbook'u geçici dosyaya yaz
+    openxlsx::saveWorkbook(wb, file = temp_excel_file, overwrite = TRUE)
+
+    # 2. Geçici dosyanın içeriğini raw (ham) olarak oku
+    excel_raw_data <- readBin(temp_excel_file, what = "raw", n = file.info(temp_excel_file)$size)
+
+    # 3. Geçici dosyayı sil (isteğe bağlı ama iyi pratik)
+    unlink(temp_excel_file)
+
+    # 4. Raw veriyi base64 string'e dönüştür
+    excel_base64 <- base64enc::base64encode(excel_raw_data)
+
+    # 5. JavaScript fonksiyonunu çağırarak indirmeyi tetikle
+    session$sendCustomMessage(type = "downloadFile", message = list(
+      filename = paste0("transcript_",stringr::str_to_lower(input$serie_type),".xlsx"),
+      content = excel_base64,
+      mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    ))
+  })
+
+  # JavaScript fonksiyonunu tanımla
+  output$js_download <- renderUI({
+    tags$script(HTML("
+      Shiny.addCustomMessageHandler('downloadFile', function(message) {
+        // Base64 kodlu içeriği ikili (binary) veriye dönüştür
+        const byteCharacters = atob(message.content);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+
+        const blob = new Blob([byteArray], { type: message.mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = message.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+    "))
+  })
 
 
 }
