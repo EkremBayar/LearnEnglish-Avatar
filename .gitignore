@@ -6,6 +6,8 @@
 .RData
 .RDataTmp
 
+!*.rda
+
 # User-specific files
 .Ruserdata
 
@@ -40,11 +42,11 @@ vignettes/*.pdf
 .Renviron
 
 # pkgdown site
-docs/
+#docs/
 
 # translation temp files
 po/*~
 
 # RStudio Connect folder
 rsconnect/
-docs
+#docs

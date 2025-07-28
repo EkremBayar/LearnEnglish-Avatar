@@ -5,53 +5,28 @@ library(DT)
 library(dplyr)
 library(stringr)
 library(forcats)
+library(shinyWidgets)
 
-# functions
-find_structure <- function(text_column, word){
-  if(!is.character(word)){
-    stop("word argument must be a character or character vector!")
-  }
-  word_pattern <- paste0(tolower(word))
-  return(stringr::str_detect(stringr::str_to_lower(text_column), pattern = paste0(paste0("\\b", word_pattern, "\\b"),collapse = "|")))
-}
-
-find_participles <- function(text_column, type = c("ing", "ed")){
-
-  if(type == "ing" | type == "ed"){
-    pattern <- paste0("\\b.*",type,"\\b")
-  }else{
-    stop("type argument must be ing or ed!")
-  }
-  return(stringr::str_detect(stringr::str_to_lower(text_column), pattern = pattern))
-}
-
-find_detect <- function(text_column, word){
-  if(!is.character(word)){
-    stop("word argument must be a character or character vector!")
-  }
-  word_pattern <- paste0(tolower(word))
-  return(stringr::str_detect(stringr::str_to_lower(text_column), pattern = paste0(paste0(word_pattern),collapse = "|")))
-}
-
-
-datatable_header_ui <- function(datatable_id){
-  res <- tagList(
-    tags$style(type = "text/css",".noUi-connect {background: #39a642;}"), #lacivert 002749
-    tags$style(HTML(paste0("#", datatable_id, ' table.dataTable tbody tr.selected>* {box-shadow: inset 0 0 0 9999px #C6E0B4; color: black;}'))),
-    tags$head(tags$style(paste0("#", datatable_id," thead th{background-color: #002749; color: white;}"))),
-    #tags$head(tags$style("#responses_table tbody td {border-top: 0.1px solid #002749;border-left: 0.1px solid #002749;border-right: 0.1px solid #002749;}")),
-    tags$head(tags$style("#", datatable_id, " .dataTables_length {float:right;}"))
-  )
-  return(res)
-}
+source("functions.R")
 
 data(transcripts_atla)
 data(transcripts_korra)
+data(transcripts_lost)
+data(transcripts_breaking_bad)
+data(transcripts_himym)
+data(transcripts_the_office)
+data(transcripts_friends)
 data(phrasal_verbs)
 
 ui <- page_sidebar(
   tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")
+    tags$link(rel = "stylesheet", type = "text/css", href = "styles.css"),
+    tags$style(HTML(
+      ".dropup .dropdown-menu {
+      max-height: 200px !important;
+      overflow-y: auto !important;
+    }"
+    ))
   ),
   # Uygulamanın genel temasını ve stilini belirliyoruz.
   # "superhero" veya "cosmo" gibi farklı temaları deneyebilirsiniz.
@@ -80,11 +55,25 @@ ui <- page_sidebar(
 
     hr(),
 
-    selectInput("serie_type", label = "Avatar", choices = c("Aang", "Korra"), selected = "Aang"),
+    #selectInput("serie_type", label = "Avatar", choices = c("Aang", "Korra", "Lost"), selected = "Aang"),
 
-    selectInput("type_process", label = "Type", choices = c("Pattern", "Participles", "Detect", "Phrasal Verbs"), selected = "Pattern"),
+    selectInput("type_process", label = "Type",
+                choices = c("Pattern", "Participles", "Detect", "Phrasal Verbs"),
+                selected = "Pattern"),
 
     uiOutput("type_process_select"),
+
+    selectizeInput(
+      inputId = "remove_eng_word",
+      label = "Remove word",
+      choices = NULL,
+      # choices parametresi HİÇ KULLANILMADI veya choices = NULL olarak ayarlandı
+      multiple = TRUE, # Birden fazla etiket seçilebilir/eklenebilir
+      options = list(
+        create = TRUE, # Kullanıcının kendi metnini yazıp yeni etiket oluşturmasına izin ver
+        placeholder = "Type word to delete and press Enter..." # Placeholder metni
+      )
+    ),
 
     hr(), # Yatay çizgi
 
@@ -94,26 +83,180 @@ ui <- page_sidebar(
     tags$img(
       src = "iroh.png",
       alt = "Uygulama Logosu" # Resim yüklenmezse gösterilecek alternatif metin
-    )
+    ),
+    # pickerInput("page_select", "Pagination", choices = NULL,options = list(
+    #   `live-search` = TRUE,                   # Arama kutusu
+    #   `live-search-placeholder` = "Search page number..."  # Arama kutusu yer tutucu
+    # ))
+    numericInput("page_select", "Pagination", value = 1)
   ),
 
   # Ana panel içeriği
   card(
-    card_header(HTML(
-      '<div style="display: flex; justify-content: space-between; align-items: center;">',
-      '  <span>Transcripts</span>', # Sola hizalanacak metin
-      '  <a href="https://translate.google.com/?sl=en&tl=tr&op=translate" target="blank_">Google Translate</a>', # Sağa hizalanacak hyperlink
-      '</div>'
+    card_header(
+      div(
+        style="display: flex; justify-content: space-between; align-items: center;",
+        div(
+          style="display:inline-block;",
+          div(style="display:inline-block;",selectInput("serie_type", label = "Series", choices = c("Aang", "Korra", "Lost", "Friends", "HIMYM", "Breaking Bad", "The Office"), selected = "Aang")),
+          div(style="display:inline-block;margin-left:10px;",selectInput("serie_season", label = "Seasons", choices = NULL, selected = NULL)),
+          div(style="display:inline-block;margin-left:10px;",selectInput("serie_episode", label = "Episodes", choices = NULL, selected = NULL)),
+          div(style="display:inline-block;margin-left:10px;",selectInput("serie_character", label = "Characters", choices = NULL, selected = NULL)),
+          div(style="display:inline-block;margin-left:10px;",actionButton("serie_submit", label = "Submit")),
+        ),
+        div(HTML('<a href="https://translate.google.com/?sl=en&tl=tr&op=translate" target="blank_" style="margin-right:10px">Google Translate</a>'),
+        input_dark_mode(id = "dark_mode_toggle", mode = "light"))
+
     )),
+
+
     dataTableOutput("dt_transcript"),
     datatable_header_ui("dt_transcript"),
     card_footer("Only the Avatar can save your English skills!")
   )
 )
 
+
 server <- function(input, output, session) {
 
+  # Dynamic Series Inputs
+  observe({
+    req(input$serie_type)
+
+    transcript_season <- switch(input$serie_type,
+           "Aang" = unique(transcripts_atla$book),
+           "Korra" = unique(transcripts_korra$book),
+           "Lost" = unique(transcripts_lost$book),
+           "Friends" = unique(transcripts_friends$book),
+           "HIMYM" = unique(transcripts_himym$book),
+           "Breaking Bad" = unique(transcripts_breaking_bad$book),
+           "The Office" = unique(transcripts_the_office$book)
+           )
+    updateSelectInput(session, "serie_season", choices = c("All", transcript_season), selected = "All")
+  })
+
+  observe({
+    req(input$serie_type)
+    req(input$serie_season)
+
+    transcript_season <- switch(input$serie_type,
+                                "Aang" = distinct(transcripts_atla[, c("book", "chapter")]),
+                                "Korra" = distinct(transcripts_korra[, c("book", "chapter")]),
+                                "Lost" = distinct(transcripts_lost[, c("book", "chapter")]),
+                                "Friends" = distinct(transcripts_friends[, c("book", "chapter")]),
+                                "HIMYM" = distinct(transcripts_himym[, c("book", "chapter")]),
+                                "Breaking Bad" = distinct(transcripts_breaking_bad[, c("book", "chapter")]),
+                                "The Office" = distinct(transcripts_the_office[, c("book", "chapter")])
+    )
+
+    transcript_episodes <- switch(as.character(input$serie_season == "All"),
+                                "TRUE" = transcript_season %>% pull(chapter),
+                                "FALSE" = transcript_season %>% filter(book == input$serie_season) %>% pull(chapter)
+    )
+
+    updateSelectInput(session, "serie_episode", choices = c("All", transcript_episodes), selected = "All")
+  })
+
+  observe({
+    req(input$serie_type)
+    req(input$serie_season)
+    req(input$serie_episode)
+
+    transcript_season <- switch(input$serie_type,
+                                "Aang" = distinct(transcripts_atla[, c("book", "chapter", "character")] %>% filter(character != "Scene Description")),
+                                "Korra" = distinct(transcripts_korra[, c("book", "chapter", "character")] %>% filter(character != "Scene Description")),
+                                "Lost" = distinct(transcripts_lost[, c("book", "chapter", "character")] %>% filter(character != "Scene Description")),
+                                "Friends" = distinct(transcripts_friends[, c("book", "chapter", "character")] %>% filter(character != "Scene Description")),
+                                "HIMYM" = distinct(transcripts_himym[, c("book", "chapter", "character")] %>% filter(character != "Scene Description")),
+                                "Breaking Bad" = distinct(transcripts_breaking_bad[, c("book", "chapter", "character")] %>% filter(character != "Scene Description")),
+                                "The Office" = distinct(transcripts_the_office[, c("book", "chapter", "character")] %>% filter(character != "Scene Description"))
+
+    )
+
+    transcript_episodes <- switch(as.character(input$serie_season == "All"),
+                                  "TRUE" = transcript_season,
+                                  "FALSE" = transcript_season %>% filter(book == input$serie_season)
+    )
+
+    transcript_characters <- switch(as.character(input$serie_episode == "All"),
+                                  "TRUE" = transcript_episodes %>% pull(character) %>% unique %>% sort,
+                                  "FALSE" = transcript_episodes %>% filter(chapter == input$serie_episode) %>% pull(character) %>% unique %>% sort
+    )
+
+    updateSelectInput(session, "serie_character", choices = c("All", transcript_characters), selected = "All")
+  })
+
+
+  # Reactive Data -----------------------------------------------------------
   rvList <- reactiveValues()
+
+  observeEvent(input$serie_type, {
+    rvList$raw_df <- switch(
+      input$serie_type,
+      "Aang" = transcripts_atla,
+      "Korra" = transcripts_korra,
+      "Lost" = transcripts_lost,
+      "Friends" = transcripts_friends,
+      "HIMYM" = transcripts_himym,
+      "Breaking Bad" = transcripts_breaking_bad,
+      "The Office" = transcripts_the_office
+    )
+  })
+
+
+  observeEvent(input$serie_submit, {
+    temp <- rvList$raw_df
+    if(input$serie_season != "All"){temp <- temp %>% filter(book == input$serie_season)}
+    if(input$serie_episode != "All"){temp <- temp %>% filter(chapter == input$serie_episode)}
+    if(input$serie_character != "All"){temp <- temp %>% filter(character == input$serie_character)}
+    rvList$df <- temp
+  })
+
+  # Reactive Data
+  temp <- reactive({
+
+    input$type_process
+    input$eng_word
+    input$remove_eng_word
+    input$serie_type
+
+    if(is.null(rvList$df)){
+      temp <- rvList$raw_df
+    }else{
+      temp <- rvList$df
+    }
+
+
+    df <- temp %>%
+      mutate(
+        character = factor(character),
+        book = fct_reorder(paste0(book_num,". ",  book), book_num),
+        chapter = fct_reorder(paste0(book_num,".",chapter_num,". ",  chapter), chapter_num)
+      ) %>%
+      filter(!is.na(character_words), character != "Scene Description") %>%
+      select(book, chapter, character, character_words) #"full_text", "character_words"))
+
+    if(length(input$eng_word) > 0){
+
+      if(input$type_process == "Pattern" | input$type_process == "Phrasal Verbs"){
+        temp <- df %>% filter(find_structure(character_words, word = input$eng_word))
+      }else if(input$type_process == "Detect"){
+        temp <- df %>% filter(find_detect(character_words, word = input$eng_word))
+      }else if(input$type_process == "Participles"){
+        temp <- df %>% filter(find_participles(character_words, type = input$eng_word)) %>% suppressWarnings()
+      }
+
+    }else{
+      temp <- df
+    }
+
+    if(length(input$remove_eng_word) > 0){
+      temp <- temp %>% filter(!str_detect(stringr::str_to_lower(character_words), paste0(stringr::str_to_lower(input$remove_eng_word),collapse="|")))
+    }
+
+
+    return(temp)
+  })
 
   observeEvent(input$reset_button,{
     updateSelectizeInput(session, "eng_word", choices = character(), selected = character())
@@ -178,48 +321,29 @@ server <- function(input, output, session) {
   })
 
 
-  # Reactive Data
-  temp <- reactive({
 
-    input$type_process
-    input$eng_word
-    input$serie_type
 
-    if(input$serie_type == "Aang"){
-      df <- transcripts_atla
-    }else{
-      df <- transcripts_korra
-    }
+  current_page_length <- reactiveVal(10)  # başlangıç varsayımı
+  observeEvent(input$dt_page_length, {
+    current_page_length(input$dt_page_length)
+  })
+  observe({
+    req(temp())
+    n_rows <- nrow(temp())
+    page_length <- current_page_length()
+    total_pages <- ceiling(n_rows / page_length)
+    #updatePickerInput(session, "page_select", choices = 1:total_pages)
+    updateNumericInput(session, "page_select", min = 1, value = 1, max = total_pages)
+  })
 
-    df <- df %>%
-      mutate(
-        character = factor(character),
-        book = fct_reorder(paste0(book_num,". ",  book), book_num),
-        chapter = fct_reorder(paste0(book_num,".",chapter_num,". ",  chapter), chapter_num)
-      ) %>%
-      filter(!is.na(character_words), character != "Scene Description") %>%
-      select(book, chapter, character, character_words) #"full_text", "character_words"))
-
-    if(length(input$eng_word) > 0){
-
-      if(input$type_process == "Pattern" | input$type_process == "Phrasal Verbs"){
-        temp <- df %>% filter(find_structure(character_words, word = input$eng_word))
-      }else if(input$type_process == "Detect"){
-        temp <- df %>% filter(find_detect(character_words, word = input$eng_word))
-      }else if(input$type_process == "Participles"){
-        temp <- df %>% filter(find_participles(character_words, type = input$eng_word)) %>% suppressWarnings()
-      }
-
-    }else{
-      temp <- df
-    }
-    return(temp)
+  observeEvent(input$page_select, {
+    session$sendCustomMessage("change_page", as.numeric(input$page_select))
   })
 
   # Datatable
   output$dt_transcript <- renderDataTable({
 
-    js_target_index <- which(names(temp()) == "character_words")
+    js_target_index <- which(names(temp() %>% select(-c("book", "chapter"))) == "character_words")
 
     highlight_terms <- input$eng_word[input$eng_word != "" & !is.na(input$eng_word)]
 
@@ -257,7 +381,7 @@ server <- function(input, output, session) {
         escaped_detect_terms <- sapply(highlight_terms, function(term) {
           # Regex özel karakterlerini kaçır
           # Boşluklar da dahil olmak üzere tam olarak girilen metni arayacağız
-          gsub("([.\\+*?\\[\\^\\]$(){}\\|/:!<>=-])", "\\\\\\1", tolower(term), perl = TRUE)
+          gsub("([.\\+*?\\[\\^\\]$(){}\\|/:!<>=-])", "\\\\\\1", tolower(str_replace_all(term, "\\'", "\\\\'")), perl = TRUE)
         })
 
         # Kelimeleri veya kelime öbeklerini '|' ile birleştir
@@ -338,29 +462,53 @@ server <- function(input, output, session) {
     }
 
     datatable(
-      tryCatch({temp()},error=function(e){NULL}),
-      colnames = c("Book", "Chapter", "Character", "Text"),
-      selection = "none", filter = "top",
+      tryCatch({temp() %>% select(-c("book", "chapter"))},error=function(e){NULL}),
+      #colnames = c("Book", "Chapter", "Character", "Text"),
+      colnames = c("Character", "Text"),
+      selection = "none",
+      #filter = "top",
       escape = FALSE, # HTML etiketlerinin yorumlanmasını sağlar
       options = list(
         # "Sentence" sütununu hedeflemek için columnDefs kullanıyoruz.
         # index = 1 (R'da 2. sütun, JS'de 1. sütun)
         columnDefs = list(
           render_js
-        )
+        ),
+        paginationType = 'full_numbers'
       ),
-      callback = JS(
+      callback = JS(paste(
+        # Sayfa uzunluğu değişimini Shiny'a bildir
+        "table.on('length.dt', function(e, settings, len) {",
+        "  Shiny.setInputValue('dt_page_length', len, {priority: 'event'});",
+        "});",
+
+        # Sayfa bilgisi her draw'da güncellenir
+        "table.on('draw', function() {",
+        "  var pageInfo = table.page.info();",
+        "  Shiny.setInputValue('current_page', pageInfo.page + 1, {priority: 'event'});",
+        "});",
+
+        # Sayfa değiştirici
+        "Shiny.addCustomMessageHandler('change_page', function(page) {",
+        "  table.page(page - 1).draw(false);",
+        "});",
+
+        # Çift tıklama ile Google Translate
         "table.on('dblclick', 'td', function() {",
         "  var cell = $(this);",
         "  var character_words = cell.text();",
         "  var encodedText = encodeURIComponent(character_words);",
-        "  var googleTranslateUrl = 'https://translate.google.com/?sl=en&tl=tr&text=' + encodedText;", # <<-- Sorun burada olabilir
+        "  var googleTranslateUrl = 'https://translate.google.com/?sl=en&tl=tr&text=' + encodedText;",
         "  window.open(googleTranslateUrl, '_blank');",
         "  return false;",
-        "});"
-      )
+        "});",
+        sep = "\n"
+      ))
+
     )
   })
+
+
 }
 
 shinyApp(ui, server)
