@@ -16,6 +16,7 @@ data(transcripts_breaking_bad)
 data(transcripts_himym)
 data(transcripts_the_office)
 data(transcripts_friends)
+data(transcripts_spiderman_tas)
 data(phrasal_verbs)
 
 ui <- page_sidebar(
@@ -101,7 +102,7 @@ ui <- page_sidebar(
         style="display: flex; justify-content: space-between; align-items: center;",
         div(
           style="display:inline-block;",
-          div(style="display:inline-block;",selectInput("serie_type", label = "Series", choices = c("Aang", "Korra", "Lost", "Friends", "HIMYM", "Breaking Bad", "The Office"), selected = "Aang")),
+          div(style="display:inline-block;",selectInput("serie_type", label = "Series", choices = c("Aang", "Korra", "Spiderman", "Lost", "Friends", "HIMYM", "Breaking Bad", "The Office"), selected = "Aang")),
           div(style="display:inline-block;margin-left:10px;",selectInput("serie_season", label = "Seasons", choices = NULL, selected = NULL)),
           div(style="display:inline-block;margin-left:10px;",selectInput("serie_episode", label = "Episodes", choices = NULL, selected = NULL)),
           div(style="display:inline-block;margin-left:10px;",selectInput("serie_character", label = "Characters", choices = NULL, selected = NULL)),
@@ -129,6 +130,7 @@ server <- function(input, output, session) {
     transcript_season <- switch(input$serie_type,
            "Aang" = unique(transcripts_atla$book),
            "Korra" = unique(transcripts_korra$book),
+           "Spiderman" = unique(transcripts_spiderman_tas$book),
            "Lost" = unique(transcripts_lost$book),
            "Friends" = unique(transcripts_friends$book),
            "HIMYM" = unique(transcripts_himym$book),
@@ -145,6 +147,7 @@ server <- function(input, output, session) {
     transcript_season <- switch(input$serie_type,
                                 "Aang" = distinct(transcripts_atla[, c("book", "chapter")]),
                                 "Korra" = distinct(transcripts_korra[, c("book", "chapter")]),
+                                "Spiderman" = distinct(transcripts_spiderman_tas[, c("book", "chapter")]),
                                 "Lost" = distinct(transcripts_lost[, c("book", "chapter")]),
                                 "Friends" = distinct(transcripts_friends[, c("book", "chapter")]),
                                 "HIMYM" = distinct(transcripts_himym[, c("book", "chapter")]),
@@ -168,6 +171,7 @@ server <- function(input, output, session) {
     transcript_season <- switch(input$serie_type,
                                 "Aang" = distinct(transcripts_atla[, c("book", "chapter", "character")] %>% filter(character != "Scene Description")),
                                 "Korra" = distinct(transcripts_korra[, c("book", "chapter", "character")] %>% filter(character != "Scene Description")),
+                                "Spiderman" = distinct(transcripts_spiderman_tas[, c("book", "chapter", "character")] %>% filter(character != "Scene Description")),
                                 "Lost" = distinct(transcripts_lost[, c("book", "chapter", "character")] %>% filter(character != "Scene Description")),
                                 "Friends" = distinct(transcripts_friends[, c("book", "chapter", "character")] %>% filter(character != "Scene Description")),
                                 "HIMYM" = distinct(transcripts_himym[, c("book", "chapter", "character")] %>% filter(character != "Scene Description")),
@@ -198,6 +202,7 @@ server <- function(input, output, session) {
       input$serie_type,
       "Aang" = transcripts_atla,
       "Korra" = transcripts_korra,
+      "Spiderman" = transcripts_spiderman_tas,
       "Lost" = transcripts_lost,
       "Friends" = transcripts_friends,
       "HIMYM" = transcripts_himym,
